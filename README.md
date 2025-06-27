@@ -33,12 +33,6 @@ A machine learning-powered web application that analyzes URLs to detect potentia
 
 ## 🚀 Getting Started
 
-### Running on Replit
-
-1. Click the "Run" button in the Replit interface
-2. The app will start on `http://0.0.0.0:5000`
-3. Access the web interface through the provided URL
-
 ### Local Installation
 
 ```bash
