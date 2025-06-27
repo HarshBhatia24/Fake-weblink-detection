@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scam Website Detection</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --success: #10b981;
+      --danger: #ef4444;
+      --dark: #1f2937;
+      --gray: #6b7280;
+      --light-gray: #f9fafb;
+      --white: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--dark);
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--gray);
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    .input-group {
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      color: var(--dark);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--white);
+      border: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 24px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #result {
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .loading {
+      color: var(--gray);
+      background: var(--light-gray);
+    }
+
+    .safe {
+      color: var(--white);
+      background: var(--success);
+    }
+
+    .scam {
+      color: var(--white);
+      background: var(--danger);
+    }
+
+    .error {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .subtitle {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Scam Detector</h1>
+    <p class="subtitle">Check if a website is safe or potentially harmful</p>
+
+    <div class="input-group">
+      <label for="urlInput">Website URL</label>
+      <input type="text" id="urlInput" placeholder="https://example.com" />
+    </div>
+
+    <button onclick="checkUrl()">Analyze Website</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function isValidUrl(url) {
+      try {
+        new URL(url);
+        return url.startsWith('http://') || url.startsWith('https://');
+      } catch {
+        return false;
+      }
+    }
+
+    function showResult(message, type = '') {
+      const result = document.getElementById('result');
+      result.textContent = message;
+      result.className = type;
+    }
+
+    async function checkUrl() {
+      const input = document.getElementById('urlInput');
+      const button = document.querySelector('button');
+      const url = input.value.trim();
+
+      if (!url) {
+        showResult('Please enter a website URL', 'error');
+        return;
+      }
+
+      if (!isValidUrl(url)) {
+        showResult('Please enter a valid URL starting with http:// or https://', 'error');
+        return;
+      }
+
+      button.disabled = true;
+      showResult('Analyzing website...', 'loading');
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          showResult(data.error, 'error');
+        } else {
+          const message = data.result === 'Scam' ? 
+            '⚠️ Scam Website Detected!' : 
+            '✅ Website is Safe';
+          showResult(message, data.result.toLowerCase());
+        }
+      } catch (error) {
+        showResult('Error analyzing website. Please try again.', 'error');
+        console.error('Error:', error);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById('urlInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        checkUrl();
+      }
+    });
+  </script>
+</body>
+</html>
